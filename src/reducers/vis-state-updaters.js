@@ -172,7 +172,14 @@ export const INITIAL_VIS_STATE = {
   ],
 
   // defaults layer classes
-  layerClasses: LayerClasses
+  layerClasses: LayerClasses,
+
+  editor: {
+    // GEO FEATURES (Shapes)
+    features: [],
+    selectedFeatureId: null
+  }
+
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -1292,4 +1299,15 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layers: newLayers,
     layerData: newLayerDatas
   };
+}
+
+export function setFeaturesUpdater(state, {features = []}) {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      features,
+      selectedFeatureId: (features[0] || {}).id
+    }
+  }
 }

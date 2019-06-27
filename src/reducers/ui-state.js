@@ -50,6 +50,8 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_DATA]: uiStateUpdaters.setExportDataUpdater,
   [ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN]: uiStateUpdaters.setUserMapboxAccessTokenUpdater,
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormat,
+  [ActionTypes.SET_MAP_MODE]: uiStateUpdaters.setMapModeUpdater,
+  [ActionTypes.SET_FEATURES]: uiStateUpdaters.setFeaturesUpdater,
   [ActionTypes.SET_EXPORT_MAP_HTML_MODE]: uiStateUpdaters.setExportMapHTMLMode
 };
 

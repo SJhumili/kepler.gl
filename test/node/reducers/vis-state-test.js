@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape-catch';
+/* eslint-disable max-statements */import test from 'tape-catch';
 import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -1840,7 +1839,7 @@ test('#visStateReducer -> setFilter', t => {
             index: 0
           },
           geometry: {
-            type: 'Polygon',
+            type: 'DrawPolygon',
             coordinates: [
               [
                 [-122.401159718585049, 37.782024266952142],
@@ -1875,7 +1874,7 @@ test('#visStateReducer -> setFilter', t => {
             index: 2
           },
           geometry: {
-            type: 'Polygon',
+            type: 'DrawPolygon',
             coordinates: [
               [
                 [-122.39249932896719, 37.793768814133983],

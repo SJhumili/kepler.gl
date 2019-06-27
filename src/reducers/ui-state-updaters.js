@@ -25,7 +25,8 @@ import {
   RATIOS,
   RESOLUTIONS,
   EXPORT_MAP_FORMATS,
-  EXPORT_HTML_MAP_MODES
+  EXPORT_HTML_MAP_MODES,
+  MAP_MODES
 } from 'constants/default-settings';
 import {createNotification} from 'utils/notifications-utils';
 
@@ -83,22 +84,21 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  * @property {Object} splitMap Default: `{show: true}`
  * @public
  */
-export const DEFAULT_MAP_CONTROLS = {
-  visibleLayers: {
-    show: true,
-    active: false
-  },
-  mapLegend: {
-    show: true,
-    active: false
-  },
-  toggle3d: {
-    show: true
-  },
-  splitMap: {
-    show: true
-  }
+const DEFAULT_MAP_CONTROLS_FEATURES = {
+  show: true,
+  active: false
 };
+
+export const DEFAULT_MAP_CONTROLS = [
+  'visibleLayers',
+  'mapLegend',
+  'toggle3d',
+  'splitMap',
+  'mapDraw'
+].reduce((final, current) => ({
+  ...final,
+  [current]: DEFAULT_MAP_CONTROLS_FEATURES
+}), {});
 
 /**
  * Default image export config
@@ -200,7 +200,9 @@ export const INITIAL_UI_STATE = {
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
-  notifications: DEFAULT_NOTIFICATIONS
+  notifications: DEFAULT_NOTIFICATIONS,
+  // map mode
+  mode: MAP_MODES.READ_ONLY
 };
 
 /* Updaters */
@@ -512,7 +514,7 @@ export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken
  * @param {string} format to use to export the map onto
  * @return {Object} nextState
  */
-export const setExportMapFormat = (state, {payload: format}) => ({
+export const setExportMapFormatUpdater = (state, {payload: format}) => ({
   ...state,
   exportMap: {
     ...state.exportMap,
@@ -566,3 +568,27 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   ...state,
   notifications: state.notifications.filter(n => n.id !== id)
 });
+
+/**
+ * Set map mode. If the new map mode is equal to the current one
+ * The function will revert to READ_ONLY mode
+ * @param {Object} state `uiState`
+ * @param {Object} action
+ * @param {String} action.payload mode to be applied to current kepler.gl instance
+ * @return {Object} nextState
+ */
+export const setMapModeUpdater = (state, {payload: mode}) => ({
+  ...state,
+  mode: mode === state.mode ? MAP_MODES.READ_ONLY : mode
+});
+
+export const setFeaturesUpdater = (state, {features = []}) => {
+  // if (features.length && features[features.length - 1].properties.isClosed) {
+  //   return {
+  //     ...state,
+  //     mode: MAP_MODES.READ_ONLY
+  //   };
+  // }
+
+  return state;
+};
