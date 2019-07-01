@@ -139,12 +139,16 @@ const ActionTypes = keyMirror({
   SET_USER_MAPBOX_ACCESS_TOKEN: null,
   SET_EXPORT_MAP_HTML_MODE: null,
 
+  // uiState > editor
+  SET_EDITOR_MODE: null,
+  SET_SELECTED_FEATURE: null,
+
   // all
   INIT: null,
   ADD_DATA_TO_MAP: null,
   RECEIVE_MAP_CONFIG: null,
-  RESET_MAP_CONFIG: null,
-  SET_EDITOR_MODE: null
+  RESET_MAP_CONFIG: null
+
 });
 
 const addPrefix = actions =>

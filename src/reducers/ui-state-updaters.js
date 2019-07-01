@@ -171,7 +171,8 @@ export const DEFAULT_EXPORT_MAP = {
 };
 
 export const DEFAULT_EDITOR = {
-  mode: EDITOR_MODES.READ_ONLY
+  mode: EDITOR_MODES.READ_ONLY,
+  selectedFeature: null
 };
 
 /**
@@ -578,5 +579,13 @@ export const setEditorModeUpdater = (state, {payload: mode}) => ({
   editor: {
     ...state.editor,
     mode
+  }
+});
+
+export const setSelectedFeatureUpdater = (state, {payload: selectedFeature}) => ({
+  ...state,
+  editor: {
+    ...state.editor,
+    selectedFeature
   }
 });
