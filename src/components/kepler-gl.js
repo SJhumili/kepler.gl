@@ -248,7 +248,7 @@ function KeplerGlFactory(
         mapboxApiUrl,
         mapState,
         uiState,
-        visState,
+        editor: visState.editor,
         mapStyle,
         mapControls: uiState.mapControls,
         layers,
