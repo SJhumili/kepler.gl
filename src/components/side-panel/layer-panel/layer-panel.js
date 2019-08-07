@@ -50,10 +50,11 @@ function LayerPanelFactory(LayerConfigurator) {
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
       onCloseConfig: PropTypes.func,
-
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisualChannelConfigChange: PropTypes.func,
+      playAnimation: PropTypes.func,
+      enableLayerAnimation: PropTypes.func
     };
 
     updateLayerConfig = newProp => {
@@ -93,7 +94,11 @@ function LayerPanelFactory(LayerConfigurator) {
 
     _toggleEnableConfig = e => {
       e.stopPropagation();
-      const {layer: {config: {isConfigActive}}} = this.props;
+      const {
+        layer: {
+          config: {isConfigActive}
+        }
+      } = this.props;
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
