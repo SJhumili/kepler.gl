@@ -40,7 +40,6 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {MAP_MODES} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {

@@ -542,22 +542,12 @@ export const addCustomMapStyleUpdater = state => {
  * @memberof mapStyleUpdaters
  * @param state
  * @param color
- * @return {{[p: string]: *}}
+ * @return {Object} nextState
  */
 export const set3dBuildingColorUpdater = (state, {payload: color}) => ({
   ...state,
   threeDBuildingColor: color,
   custom3DBuildingColor: true
-});
-
-export const setMapMode = (state, {payload: mode}) => ({
-  ...state,
-  // Update top map style
-  topMapStyle: mode !== MAP_MODES.READ_ONLY ? editTopMapStyle({
-    id: state.styleType,
-    mapStyle: state.mapStyles[state.styleType],
-    visibleLayerGroups: (state.topMapStyle || {} ).visibleLayerGroups || []
-  }) : null
 });
 
 /**

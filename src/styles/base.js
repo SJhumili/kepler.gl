@@ -238,7 +238,6 @@ const gridDefaultHeight = 600;
 export const actionPanelWidth = 110;
 export const actionPanelHeight = 32;
 
-
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -962,7 +961,6 @@ export const theme = {
   notificationPanelWidth,
   notificationPanelItemWidth,
   notificationPanelItemHeight,
-
 
   // datagrid
   columnWidth,
