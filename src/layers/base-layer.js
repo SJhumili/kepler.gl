@@ -603,20 +603,6 @@ export default class Layer {
     return [lngBounds[0], latBounds[0], lngBounds[1], latBounds[1]];
   }
 
-  getLightSettingsFromBounds(bounds) {
-    return Array.isArray(bounds) && bounds.length >= 4
-      ? {
-          ...DEFAULT_LIGHT_SETTINGS,
-          lightsPosition: [
-            ...bounds.slice(0, 2),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-            ...bounds.slice(2, 4),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-          ]
-        }
-      : DEFAULT_LIGHT_SETTINGS;
-  }
-
   getEncodedChannelValue(
     scale,
     data,

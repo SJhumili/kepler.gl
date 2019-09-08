@@ -86,20 +86,6 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   return {layerData, layer};
 }
 
-export function getLightSettingsFromBounds(bounds) {
-  return Array.isArray(bounds) && bounds.length >= 4
-    ? {
-        ...DEFAULT_LIGHT_SETTINGS,
-        lightsPosition: [
-          ...bounds.slice(0, 2),
-          DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-          ...bounds.slice(2, 4),
-          DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-        ]
-      }
-    : DEFAULT_LIGHT_SETTINGS;
-}
-
 export function getTimeAnimationDomainForTripLayer(layer, datasets) {
   const {columns, dataId} = layer.config;
   const dataContent = datasets[dataId].allData;

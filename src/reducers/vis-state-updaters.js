@@ -173,11 +173,11 @@ export const INITIAL_VIS_STATE = {
   layerClasses: LayerClasses,
 
   // default animation
+  // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
   animationConfig: {
     domain: [null, null],
     currentTime: 0,
-    duration: 10,
-    speed: 0.03
+    speed: 1
   }
 };
 
@@ -1140,6 +1140,10 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 /* eslint-disable max-statements */
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
+  console.time('updateVisData')
+
+  console.time('createNewDataEntry')
+
   const {config, options} = action;
 
   const datasets = Array.isArray(action.datasets)
@@ -1156,11 +1160,17 @@ export const updateVisDataUpdater = (state, action) => {
   if (!Object.keys(newDateEntries).length) {
     return state;
   }
+  console.timeEnd('createNewDataEntry')
+
+  console.time('receiveMapConfigUpdater')
 
   // apply config if passed from action
   const previousState = config ? receiveMapConfigUpdater(state, {
     payload: {config, options}
   }) : state;
+  console.timeEnd('receiveMapConfigUpdater')
+
+  console.time('mergeAndCreate')
 
   const stateWithNewData = {
     ...previousState,
@@ -1227,9 +1237,15 @@ export const updateVisDataUpdater = (state, action) => {
       mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
     }
   });
+  console.timeEnd('mergeAndCreate')
+
+  console.time('updateAllLayerDomainData')
 
   const updatedState = updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
-  console.time('test data load finish')
+
+  console.timeEnd('updateAllLayerDomainData')
+
+  console.timeEnd('updateVisData')
   return updatedState
 };
 /* eslint-enable max-statements */

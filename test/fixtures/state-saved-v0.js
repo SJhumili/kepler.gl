@@ -1062,22 +1062,7 @@ mergedLayer0.config = {
 };
 
 mergedLayer0.meta = {
-  bounds: [-122.4784396, 37.78188901, -121.3686062, 38.5590766],
-  lightSettings: {
-    lightsPosition: [
-      -122.4784396,
-      37.78188901,
-      8000,
-      -121.3686062,
-      38.5590766,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4784396, 37.78188901, -121.3686062, 38.5590766]
 };
 
 const mergedLayer1 = new ArcLayer({
@@ -1204,22 +1189,7 @@ mergedLayer2.config = {
 };
 
 mergedLayer2.meta = {
-  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786],
-  lightSettings: {
-    lightsPosition: [
-      -122.4761712,
-      37.6169644,
-      8000,
-      -121.7922809,
-      38.4163786,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786]
 };
 
 const mergedLayer3 = new HexagonLayer({
@@ -1278,22 +1248,7 @@ mergedLayer3.config = {
 };
 
 mergedLayer3.meta = {
-  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786],
-  lightSettings: {
-    lightsPosition: [
-      -122.4761712,
-      37.6169644,
-      8000,
-      -121.7922809,
-      38.4163786,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786]
 };
 
 const mergedLayer4 = new GeojsonLayer({id: 'vta'});
@@ -1473,21 +1428,6 @@ mergedLayer4.meta = {
     -122.39989147796784,
     37.787534455433345
   ],
-  lightSettings: {
-    lightsPosition: [
-      -122.50828762723958,
-      37.733266432915535,
-      8000,
-      -122.39989147796784,
-      37.787534455433345,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
   featureTypes: {polygon: true},
   fp64: false,
   fixedRadius: false

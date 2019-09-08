@@ -40,7 +40,7 @@ const StyledRangeSlider = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: ${props => (props.isRanged ? 0 : 10)}px;
+  margin-top: ${props => (props.isRanged ? 0 : 12)}px;
 `;
 
 export default class Slider extends Component {

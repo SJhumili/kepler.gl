@@ -337,9 +337,6 @@ export default class GeoJsonLayer extends Layer {
     // get bounds from features
     const bounds = getGeojsonBounds(allFeatures);
 
-    // get lightSettings from points
-    const lightSettings = this.getLightSettingsFromBounds(bounds);
-
     // if any of the feature has properties.radius set to be true
     const fixedRadius = Boolean(
       allFeatures.find(d => d && d.properties && d.properties.radius)
@@ -348,7 +345,7 @@ export default class GeoJsonLayer extends Layer {
     // keep a record of what type of geometry the collection has
     const featureTypes = getGeojsonFeatureTypes(allFeatures);
 
-    this.updateMeta({bounds, lightSettings, fixedRadius, featureTypes});
+    this.updateMeta({bounds, fixedRadius, featureTypes});
   }
 
   setInitialLayerConfig(allData) {
@@ -371,7 +368,7 @@ export default class GeoJsonLayer extends Layer {
   }
 
   renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
-    const {lightSettings, fixedRadius} = this.meta;
+    const {fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -439,7 +436,6 @@ export default class GeoJsonLayer extends Layer {
         wireframe: visConfig.wireframe,
         lineMiterLimit: 2,
         rounded: true,
-        lightSettings,
         updateTriggers
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d

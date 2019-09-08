@@ -21,100 +21,58 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
+import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 
 import Slider from 'components/common/slider/slider';
-import {
-  WidgetContainer,
-  Button,
-  ButtonGroup
-} from 'components/common/styled-components';
-import {Play, Reset, Pause} from 'components/common/icons';
-import SpeedControl from './speed-control';
-import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
+import {BottomWidgetInner} from 'components/common/styled-components';
+import SpeedControlFactory from './speed-control';
+import AnimationPlaybacksFactory from './playback-controls';
+import FloatingTimeDisplayFactory from './floating-time-display';
+import {BASE_SPEED} from 'constants/default-settings';
 
 const SliderWrapper = styled.div`
   display: flex;
   position: relative;
   flex-grow: 1;
-  margin-top: 6px;
-  margin-right: 5px;
-`;
-
-const StyledControl = styled.div`
-  background-color: ${props => props.theme.panelBackground};
-  // height: 60px;
+  margin-right: 24px;
+  margin-left: 24px;
 `;
 
 const AnimationWidgetInner = styled.div`
-  padding: 10px 12px 2px 12px;
   position: relative;
   display: flex;
-`;
+  align-items: center;
+  height: 32px;
 
-const StyledAnimationControls = styled.div`
-  display: flex;
-`;
+  .animation-control__speed-control {
+    margin-right: -12px;
 
-const IconButton = styled(Button)`
-  padding: 6px 4px;
-  svg {
-    margin: 0 6px;
+    .animation-control__speed-slider {
+      right: calc(0% - 10px);
+    }
   }
 `;
 
 const StyledDomain = styled.div`
-  color: ${props => props.theme.textColor};
-  margin: 0px 20px 8px 160px
-  display: flex;
-  flex-grow: 1;
-  justify-content: space-between;
-  font-size: 9px;
+  color: ${props => props.theme.titleTextColor};
   font-weight: 400;
-`;
-
-const TimeDisplay = styled.div`
-  height: 36px;
-  width: 125px;
-  background-color: ${props => props.theme.secondaryInputBgd};
-  color: white;
-  margin-left: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 1px;
-  span {
-    color: white;
-    font-size: 11px;
-    font-weight: 400;
-  }
+  font-size: 10px;
 `;
 
 const defaultTimeFormat = 'MM/DD/YY hh:mm:ss';
+const BUTTON_HEIGHT = '18px';
 
-const buttonHeight = '16px';
-const AnimationControls = ({
-  isAnimating,
-  pauseAnimation = () => {},
-  updateAnimationTime = () => {},
-  startAnimation = () => {}
-}) => (
-  <StyledAnimationControls>
-    <ButtonGroup>
-      <IconButton onClick={updateAnimationTime} link>
-        <Reset height={buttonHeight} />
-      </IconButton>
-      <IconButton onClick={isAnimating ? pauseAnimation : startAnimation} link>
-        {isAnimating ? (
-          <Pause height={buttonHeight} />
-        ) : (
-          <Play height={buttonHeight} />
-        )}
-      </IconButton>
-    </ButtonGroup>
-  </StyledAnimationControls>
-);
+AnimationControlFactory.deps = [
+  SpeedControlFactory,
+  AnimationPlaybacksFactory,
+  FloatingTimeDisplayFactory
+];
 
-const AnimationControlFactory = () => {
+function AnimationControlFactory(
+  SpeedControl,
+  AnimationPlaybacks,
+  FloatingTimeDisplay
+) {
   class AnimationControl extends Component {
     constructor(props) {
       super(props);
@@ -153,10 +111,11 @@ const AnimationControlFactory = () => {
     _nextFrame = () => {
       this._animation = null;
       const {currentTime, domain, speed} = this.props.animation;
-      const BASE_SPEED = 600;
       const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
       const nextTime =
-        currentTime + speed > domain[1] ? domain[0] : currentTime + adjustedSpeed;
+        currentTime + speed > domain[1]
+          ? domain[0]
+          : currentTime + adjustedSpeed;
       this.props.updateAnimationTime(nextTime);
     };
 
@@ -177,58 +136,54 @@ const AnimationControlFactory = () => {
     };
 
     render() {
-      const {animation, width} = this.props;
+      const {animation} = this.props;
       const {currentTime, domain, speed} = animation;
       const {showSpeedControl} = this.state;
 
       return (
-        <WidgetContainer width={width}>
-          <StyledControl>
-            <AnimationWidgetInner className="animation-widget--inner">
-              <AnimationControls
+        <BottomWidgetInner className="bottom-widget--inner">
+          <AnimationWidgetInner className="animation-widget--inner">
+            <div style={{marginLeft: '-10px'}}>
+              <AnimationPlaybacks
                 className="animation-control-playpause"
                 startAnimation={this._startAnimation}
                 isAnimating={this.state.isAnimating}
                 pauseAnimation={this._pauseAnimation}
                 resetAnimation={this._resetAnimation}
+                buttonHeight={BUTTON_HEIGHT}
+                buttonStyle="link"
               />
-
-            <SpeedControl
-              onClick={this.toggleSpeedControl}
-              showSpeedControl={showSpeedControl}
-              updateAnimationSpeed={speedMultiplier=>this.props.updateAnimationSpeed(speedMultiplier)}
-              speed={speed}
-            />
-
-              <SliderWrapper className="kg-animation-control__slider">
-                <Slider
-                  showValues={false}
-                  isRanged={false}
-                  minValue={domain[0]}
-                  maxValue={domain[1]}
-                  value1={currentTime}
-                  onSlider1Change={this.onSlider1Change}
-                  enableBarDrag={true}
-                />
-              </SliderWrapper>
-            </AnimationWidgetInner>
-
-            <StyledDomain>
-              <span>{moment.unix(domain[0]).format(defaultTimeFormat)}</span>
-              <span>{moment.unix(domain[1]).format(defaultTimeFormat)}</span>
+            </div>
+            <StyledDomain className="animation-control__time-domain">
+              <span>{moment.utc(domain[0]).format(defaultTimeFormat)}</span>
             </StyledDomain>
-          </StyledControl>
+            <SliderWrapper className="animation-control__slider">
+              <Slider
+                showValues={false}
+                isRanged={false}
+                minValue={domain[0]}
+                maxValue={domain[1]}
+                value1={currentTime}
+                onSlider1Change={this.onSlider1Change}
+                enableBarDrag={true}
+              />
+            </SliderWrapper>
+            <StyledDomain className="animation-control__time-domain">
+              <span>{moment.utc(domain[1]).format(defaultTimeFormat)}</span>
+            </StyledDomain>
+            <div style={{marginRight: '-10px'}}>
+              <SpeedControl
+                onClick={this.toggleSpeedControl}
+                showSpeedControl={showSpeedControl}
+                updateAnimationSpeed={this.props.updateAnimationSpeed}
+                speed={speed}
+                buttonHeight={BUTTON_HEIGHT}
+              />
+            </div>
+          </AnimationWidgetInner>
 
-          <TimeDisplay
-            style={{
-              position: 'absolute',
-              bottom: '110px',
-              right: '20px'
-            }}
-          >
-            <span>{moment.unix(currentTime).format(defaultTimeFormat)}</span>
-          </TimeDisplay>
-        </WidgetContainer>
+          <FloatingTimeDisplay currentTime={currentTime} />
+        </BottomWidgetInner>
       );
     }
   }
@@ -239,6 +194,6 @@ const AnimationControlFactory = () => {
   };
 
   return AnimationControl;
-};
+}
 
 export default AnimationControlFactory;

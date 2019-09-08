@@ -241,10 +241,8 @@ export default class HexagonIdLayer extends Layer {
     });
 
     const bounds = this.getPointsBounds(Object.values(centroids), d => d);
-    const lightSettings = this.getLightSettingsFromBounds(bounds);
-
     this.dataToFeature = {hexagonVertices, hexagonCenter, centroids};
-    this.updateMeta({bounds, lightSettings});
+    this.updateMeta({bounds});
   }
 
   renderLayer({

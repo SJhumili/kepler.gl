@@ -962,15 +962,7 @@ mergedLayer0.config = {
 };
 
 mergedLayer0.meta = {
-  bounds: [-75.135531, 40.213125, -73.949229, 41.172585],
-  lightSettings: {
-    lightsPosition: [-75.135531, 40.213125, 8000, -73.949229, 41.172585, 8000],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
+  bounds: [-75.135531, 40.213125, -73.949229, 41.172585]
   fixedRadius: false,
   featureTypes: {polygon: true}
 };
@@ -2746,15 +2738,7 @@ mergedLayer1.config = {
 };
 
 mergedLayer1.meta = {
-  bounds: [-75.135531, 40.213125, -73.949229, 41.172585],
-  lightSettings: {
-    lightsPosition: [-75.135531, 40.213125, 8000, -73.949229, 41.172585, 8000],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
+  bounds: [-75.135531, 40.213125, -73.949229, 41.172585]
   fixedRadius: false,
   featureTypes: {
     polygon: true

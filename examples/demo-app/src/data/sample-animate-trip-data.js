@@ -19,14 +19,14 @@
 // THE SOFTWARE.
 
 export default {
-  "type": "FeatureCollection",
-  "features": [
+  type: 'FeatureCollection',
+  features: [
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-73.78966, 40.6429, 0, 1565578338],
           [-73.7895, 40.64267, 0, 1565578346],
           [-73.78923, 40.6424, 0, 1565578356],
@@ -182,11 +182,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "B" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'B'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-74.33223, 40.64375, 0, 1565578213],
           [-74.33242, 40.64353, 0, 1565578217],
           [-74.33001, 40.64222, 0, 1565578243],
@@ -246,11 +246,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-73.87893, 40.64672, 0, 1565578095],
           [-73.87969, 40.64624, 0, 1565578123],
           [-73.87976, 40.64619, 0, 1565578125],
@@ -294,11 +294,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-74.18572, 40.68929, 0, 1565577803],
           [-74.1858, 40.68924, 0, 1565577808],
           [-74.18564, 40.68909, 0, 1565577821],
@@ -498,11 +498,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "B" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'B'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-74.00823, 40.71351, 0, 1565577838],
           [-74.00884, 40.7138, 0, 1565577867],
           [-74.00668, 40.71653, 0, 1565577947],
@@ -548,11 +548,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-73.97301, 40.67601, 0, 1565578666],
           [-73.97161, 40.67546, 0, 1565578694],
           [-73.97142, 40.67575, 0, 1565578712],
@@ -564,11 +564,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-74.03806, 40.74578, 0, 1565578252],
           [-74.03893, 40.74289, 0, 1565578322],
           [-74.03934, 40.74158, 0, 1565578354],
@@ -602,11 +602,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "B" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'B'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-73.79007, 40.64681, 0, 1565577697],
           [-73.79092, 40.64643, 0, 1565577720],
           [-73.79108, 40.64631, 0, 1565577726],
@@ -868,11 +868,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-73.87815, 40.88362, 0, 1565577773],
           [-73.87772, 40.88345, 0, 1565577786],
           [-73.87812, 40.88215, 0, 1565577814],
@@ -974,11 +974,11 @@ export default {
       }
     },
     {
-      "type": "Feature",
-        "properties": { "vendor": "A" },
-        "geometry": {
-        "type": "LineString",
-        "coordinates": [
+      type: 'Feature',
+      properties: {vendor: 'A'},
+      geometry: {
+        type: 'LineString',
+        coordinates: [
           [-74.00227, 40.62526, 0, 1565577261],
           [-74.00272, 40.62482, 0, 1565577277],
           [-74.00052, 40.62348, 0, 1565577315],
@@ -1069,4 +1069,4 @@ export default {
       }
     }
   ]
-}
+};

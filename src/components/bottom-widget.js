@@ -19,10 +19,10 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-slider';
-import {WidgetContainer} from './common/styled-components';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
@@ -39,6 +39,20 @@ const maxWidth = 1080;
 
 BottomWidgetFactory.deps = [TimeWidgetFactory, AnimationControlFactory];
 
+const BottomWidgetContainer = styled.div`
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  width: ${props => props.width}px;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+`;
+
 export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
   const BottomWidget = props => {
     const {
@@ -54,36 +68,48 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
+    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
+    const enlargedFilterWidth = isOpen
+      ? containerW - sidePanelWidth
+      : containerW;
 
     const animatedLayer = layers.filter(
-      l => l.config.animation && l.config.animation.enabled && l.config.isVisible
+      l =>
+        l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
 
+    // if animation control is showing, hide time display in time slider
+    const showFloatingTimeDisplay = !animatedLayer.length;
     // show playback control if layers contain trip layer & at least one trip layer is visible
     return (
-      <WidgetContainer>
-        {animatedLayer.length >= 1 ? (
+      <BottomWidgetContainer
+        width={Math.min(maxWidth, enlargedFilterWidth)}
+        className="bottom-widget--container"
+      >
+        {animatedLayer.length ? (
           <AnimationControl
             animation={animationConfig}
-            width={Math.min(maxWidth, enlargedFilterWidth)}
             updateAnimationTime={visStateActions.updateAnimationTime}
             updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
           />
-        ) : (
+        ) : null}
+        {enlargedFilterIdx > -1 ? (
           <TimeWidget
-            filters={filters}
+            filter={filters[enlargedFilterIdx]}
+            index={enlargedFilterIdx}
+            isAnyFilterAnimating={isAnyFilterAnimating}
+            datasets={datasets}
+            readOnly={readOnly}
+            showTimeDisplay={showFloatingTimeDisplay}
             setFilterPlot={visStateActions.setFilterPlot}
             setFilter={visStateActions.setFilter}
             toggleAnimation={visStateActions.toggleAnimation}
             updateAnimationSpeed={visStateActions.updateAnimationSpeed}
             enlargeFilter={visStateActions.enlargeFilter}
-            width={Math.min(maxWidth, enlargedFilterWidth)}
-            datasets={datasets}
-            readOnly={readOnly}
           />
-        )}
-      </WidgetContainer>
+        ) : null}
+      </BottomWidgetContainer>
     );
   };
 

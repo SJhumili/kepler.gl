@@ -27,7 +27,7 @@ import moment from 'moment';
 import {notNullorUndefined} from 'utils/data-utils';
 
 /**
- * Parse raw data to geojson feature
+ * Parse raw data to GeoJson feature
  * @param allData
  * @param getFeature
  * @returns {{}}
@@ -136,10 +136,12 @@ export function parseGeometryFromString(geoString) {
 export function getGeojsonBounds(features = []) {
   // calculate feature bounds is computation heavy
   // here we only pick couple
-  const samples = features.length > 500 ? getSampleData(features, 500) : features;
+  const samples =
+    features.length > 500 ? getSampleData(features, 500) : features;
 
   const nonEmpty = samples.filter(
-    d => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+    d =>
+      d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
   );
 
   try {
@@ -152,24 +154,14 @@ export function getGeojsonBounds(features = []) {
   }
 }
 
-export function featureToDeckGlGeoType(type) {
-  switch (type) {
-    case 'Point':
-    case 'MultiPoint':
-      return 'point';
-
-    case 'LineString':
-    case 'MultiLineString':
-      return 'line';
-
-    case 'Polygon':
-    case 'MultiPolygon':
-      return 'polygon';
-
-    default:
-      return null;
-  }
-}
+export const featureToDeckGlGeoType = {
+  Point: 'point',
+  MultiPoint: 'point',
+  LineString: 'line',
+  MultiLineString: 'line',
+  Polygon: 'polygon',
+  MultiPolygon: 'polygon'
+};
 
 /**
  * Parse geojson from string
@@ -177,14 +169,14 @@ export function featureToDeckGlGeoType(type) {
  * @returns {Object} mapping of feature type existence
  */
 export function getGeojsonFeatureTypes(allFeatures) {
-  const featureTypes = allFeatures.reduce((accu, f) => {
-    const geoType = featureToDeckGlGeoType(f && f.geometry && f.geometry.type);
-
+  const featureTypes = {};
+  for (let f = 0; f < allFeatures.length; f++) {
+    const geoType = featureToDeckGlGeoType[allFeatures[f].geometry && allFeatures[f].geometry.type];
     if (geoType) {
-      accu[geoType] = true;
+      featureTypes[geoType] = true;
     }
-    return accu;
-  }, {});
+  }
+
   return featureTypes;
 }
 
@@ -224,37 +216,40 @@ export function containValidTime(timestamps) {
  * @param {array} features array of geojson feature objects
  * @returns {boolean} whether it is trip layer animatable
  */
-export function isTripAnimatable(features) {
-  let isAnimatable = false;
+export function isTripGeoJson(features) {
+  let isTrip = false;
   const featureTypes = getGeojsonFeatureTypes(features);
   // condition 1: contain line string
   const hasLineString = Boolean(featureTypes.line);
   if (!hasLineString) {
-    return isAnimatable;
+    return isTrip;
   }
   // condition 2:sample line strings contain 4 coordinates
   const sampleFeatures =
     features.length > 500 ? getSampleData(features, 500) : features;
   const HasLength4 = coordHasLength4(sampleFeatures);
   if (!HasLength4) {
-    return isAnimatable;
+    return isTrip;
   }
   // condition 3:the 4 coordinate of the first feature line strings is valid time
-  const tsHolder = sampleFeatures[0].geometry.coordinates.map(coord => coord[3]);
+  const tsHolder = sampleFeatures[0].geometry.coordinates.map(
+    coord => coord[3]
+  );
   const hasValidTime = containValidTime(tsHolder);
   if (hasValidTime) {
-    isAnimatable = true;
+    isTrip = true;
   }
-  return isAnimatable;
+  return isTrip;
 }
 
 /**
  * Get unix timestamp from animatable geojson for deck.gl trip layer
  * @param {array} features array of geojson feature objects
- * @returns {} unix timestamp
+ * @returns {} unix timestamp in milliseconds
  */
 export function dataToTimeStamp(features) {
-  // Analyze type based on coordinates of the 1st linestring
+  // Analyze type based on coordinates of the 1st lineString
+
   const analyzedType = containValidTime(
     features[0].geometry.coordinates.map(coord => coord[3])
   );
@@ -263,9 +258,9 @@ export function dataToTimeStamp(features) {
     if (coord.length === 4 && notNullorUndefined(coord[3])) {
       return typeof coord[3] === 'string'
         ? moment.utc(coord[3], format).valueOf()
-        : format === 'x'
+        : format === 'X'
         ? coord[3]
-        : Math.floor(coord[3] / 1000);
+        : Math.floor(coord[3] * 1000);
     }
   };
 
