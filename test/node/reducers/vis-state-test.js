@@ -116,6 +116,48 @@ const mockFilter = {
   value: [12.25, 12.28]
 };
 
+const mockPolygonFeature = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [
+          -122.3959137249899,
+          37.79263165707648
+        ],
+        [
+          -122.40922631522194,
+          37.782007696435535
+        ],
+        [
+          -122.39774094325898,
+          37.770866369286374
+        ],
+        [
+          -122.38743021161058,
+          37.784173870616165
+        ],
+        [
+          -122.3959137249899,
+          37.79263165707648
+        ]
+      ]
+    ]
+  },
+  properties: {
+    renderType: 'Polygon',
+    isClosed: true,
+    bbox: {
+      xmin: -122.40922631522194,
+      xmax: null,
+      ymin: 37.770866369286374,
+      ymax: null
+    }
+  },
+  id: 'bf5be428-f522-4a52-8ea5-3e90e86aad51'
+};
+
 const mockRawData = {
   fields: [
     {
@@ -149,8 +191,6 @@ const mockRawData = {
 
 const InitialVisState = reducer(undefined, {});
 test('#visStateReducer', t => {
-  reducer(undefined, {});
-
   t.deepEqual(
     reducer(undefined, {}),
     {...INITIAL_VIS_STATE, initialState: {}},
@@ -2609,7 +2649,6 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
 });
 
 test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
-
   const oldState = {
     splitMaps: [
       {
@@ -2647,6 +2686,145 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   };
 
   t.deepEqual(newState.splitMaps, expectedState.splitMaps, 'should hide layer B in split map');
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
+  const expectedFeatures = [mockPolygonFeature];
+  let newReducer = reducer(
+    {
+      ...INITIAL_VIS_STATE
+    },
+    VisStateActions.setFeatures([mockPolygonFeature])
+  );
+
+  t.deepEqual(
+    newReducer.editor.features,
+    expectedFeatures,
+    'should add new feature'
+  );
+
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature({selectedFeatureId: mockPolygonFeature.id})
+  );
+
+  t.deepEqual(
+    newReducer.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'should set selected feature'
+  );
+
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.deleteFeature(mockPolygonFeature.id)
+  );
+
+  t.deepEqual(
+    newReducer.editor,
+    {
+      features: [],
+      selectedFeature: {
+        id: null
+      }
+    },
+    'Should remove existing feature and set selected feature to null'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: Add/remove new polygon feature and set it as filter', t => {
+  const state = {
+    ...InitialVisState,
+    datasets: {
+      puppy: {
+        data: mockData.data,
+        fields: mockData.fields
+      }
+    },
+    layers: [],
+    layerData: []
+  };
+
+  let newReducer = reducer(state, VisStateActions.addLayer());
+
+  t.equal(
+    newReducer.layers.length,
+    1,
+    'Should have created a new layer'
+  );
+
+  // add new polygon feature
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+
+  // set selected feature
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature({selectedFeatureId: mockPolygonFeature.id})
+  );
+
+  // set it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.togglePolygonFilter(newReducer.layers[0], mockPolygonFeature.id)
+  );
+
+  const expectedFilter = {
+    dataId: 'puppy',
+    freeze: false,
+    fixedDomain: true,
+    enlarged: false,
+    isAnimating: false,
+    speed: 1,
+    name: 'new layer',
+    type: 'polygon',
+    fieldIdx: null,
+    domain: null,
+    value: {
+      type: 'Feature',
+      properties: {
+        renderType: 'Polygon',
+        isClosed: true,
+        bbox: {
+          xmin: -122.40922631522194,
+          xmax: null,
+          ymin: 37.770866369286374,
+          ymax: null
+        }
+      },
+      id: 'bf5be428-f522-4a52-8ea5-3e90e86aad51',
+      geometry: {
+        type: 'Polygon',
+        coordinates: mockPolygonFeature.geometry.coordinates
+      }
+    },
+    plotType: 'histogram',
+    yAxis: null,
+    interval: null,
+    layerId: newReducer.layers[0].id
+  };
+
+  const {id, ...newFilter} = newReducer.filters[0];
+
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should have created a polygon filter'
+  );
+
+  // unset it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.togglePolygonFilter(newReducer.layers[0], mockPolygonFeature.id)
+  );
+
+  t.deepEqual(
+    newReducer.filters,
+    [],
+    'Should have removed the created polygon filter'
+  );
 
   t.end();
 });

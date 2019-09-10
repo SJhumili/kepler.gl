@@ -85,13 +85,15 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
-  // currently not used
-  // but may be useful if users import vis state reducer
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
 
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
-  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater
+  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
+
+  [ActionTypes.TOGGLE_POLYGON_FILTER]: visStateUpdaters.togglePolygonFilterUpdater,
+
+  [ActionTypes.SET_SELECTED_FEATURE]: visStateUpdaters.setSelectedFeatureUpdater
 };
 
 // construct vis-state reducer

@@ -53,6 +53,9 @@ const GlobalStyle = styled.div`
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;
+  position: relative;
+  width: ${props => props.width}px;
+  height: ${props => props.height}px;
 
   *,
   *:before,
@@ -255,6 +258,7 @@ function KeplerGlFactory(
         layerOrder,
         layerData,
         layerBlending,
+        filters,
         interactionConfig,
         hoverInfo,
         clicked,
@@ -293,11 +297,8 @@ function KeplerGlFactory(
       return (
         <ThemeProvider theme={theme}>
           <GlobalStyle
-            style={{
-              position: 'relative',
-              width: `${width}px`,
-              height: `${height}px`
-            }}
+            width={width}
+            height={height}
             className="kepler-gl"
             id={`kepler-gl__${id}`}
             ref={this.root}

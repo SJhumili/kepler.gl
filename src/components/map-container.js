@@ -40,6 +40,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 const MAP_STYLE = {
   container: {
@@ -127,6 +128,12 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
         [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
           this._isVisibleMapLayer(layer, mapLayers)
       }), {})
+    );
+
+    filtersSelector = props => props.filters;
+    polygonFilters = createSelector(
+      this.filtersSelector,
+      filters => filters.filter(f => f.type === FILTER_TYPES.polygon)
     );
 
     mapboxLayersSelector = createSelector(
@@ -328,9 +335,9 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls,
-        uiState, uiStateActions, editor, visStateActions,
-        hoverInfo, clicked, interactionConfig,
+        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, uiState,
+        uiStateActions, editor, visStateActions, hoverInfo,
+        clicked, interactionConfig,
         mousePos
       } = this.props;
       const layersToRender = this.layersToRenderSelector(this.props);
@@ -388,15 +395,16 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
               */}
               <Draw
                 datasets={datasets}
-                editor={uiState.editor}
-                features={editor.features}
+                editor={editor}
+                mode={uiState.editor.mode}
                 isEnabled={isEdit}
                 layers={layers}
-                onDeleteFeature={uiStateActions.deleteFeature}
-                onSelect={uiStateActions.setSelectedFeature}
+                filters={this.polygonFilters(this.props)}
+                onDeleteFeature={visStateActions.deleteFeature}
+                onSelect={visStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
                 style={{zIndex: isEdit ? 0 : -1}}
-                onToggleFeatureLayer={visStateActions.toggleFeatureLayer}
+                onTogglePolygonFilter={visStateActions.togglePolygonFilter}
               />
             </MapComponent>
           </div>

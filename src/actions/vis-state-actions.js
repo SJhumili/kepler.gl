@@ -465,16 +465,43 @@ export function setFeatures(features) {
  * It will apply the provide feature as filter to the given layer.
  * If the given feature is already applied as filter to the layer it  will remove it from  the filter list
  * @memberof visStateActions
- * @param {Object} feature
+ * @param {Object} featureId feature to use as filter base for layer
  * @param {Object} layer
- * @return {{feature: *, type: null, layer: *}}
+ * @return {{feature: *, type: ActionTypes.TOGGLE_POLYGON_FILTER, layer: *}}
  */
-export function toggleFeatureLayer(feature, layer) {
+export function togglePolygonFilter(layer, featureId) {
   return {
-    type: ActionTypes.TOGGLE_FEATURE_LAYER,
-    feature,
-    layer
+    type: ActionTypes.TOGGLE_POLYGON_FILTER,
+    layer,
+    featureId
+  };
+}
+
+/**
+ * Set the current feature to be edited/deleted
+ * @memberof visStateActions
+ * @param {Object} feature
+ * @param {string} feature.selectedFeatureId
+ * @return {{selectedFeatureId: *, type: ActionTypes.SET_SELECTED_FEATURE}}
+ */
+export function setSelectedFeature({selectedFeatureId}) {
+  return {
+    type: ActionTypes.SET_SELECTED_FEATURE,
+    selectedFeatureId
   }
+}
+
+/**
+ * Delete the given feature
+ * @memberof visStateActions
+ * @param {string} featureId if of the feature
+ * @return {{type: ActionTypes.DELETE_FEATURE, featureId: *}}
+ */
+export function deleteFeature(featureId) {
+  return {
+    type: ActionTypes.DELETE_FEATURE,
+    featureId
+  };
 }
 
 /**

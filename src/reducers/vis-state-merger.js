@@ -32,6 +32,7 @@ import {
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {FILTER_TYPES, isValidFilterValue} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -56,13 +57,14 @@ export function mergeFilters(state, filtersToMerge) {
     // uploaded data need to have the same dataId with the filter
     if (datasets[filter.dataId]) {
       // datasets is already loaded
-      const validateFilter = validateFilterWithData(
+      const validatedFilter = validateFilterWithData(
         datasets[filter.dataId],
-        filter
+        filter,
+        state.layers
       );
 
-      if (validateFilter) {
-        merged.push(validateFilter);
+      if (validatedFilter) {
+        merged.push(validatedFilter);
       }
     } else {
       // datasets not yet loaded
@@ -79,17 +81,28 @@ export function mergeFilters(state, filtersToMerge) {
       ...accu,
       [dataId]: {
         ...datasets[dataId],
-        ...filterData(datasets[dataId].allData, dataId, updatedFilters)
+        ...filterData(datasets[dataId].allData, dataId, updatedFilters, state.layers)
       }
     }),
     datasets
   );
 
+  const features = updatedFilters.reduce((acc, f) => {
+    return f.type === FILTER_TYPES.polygon ? [...acc, f.value] : acc;
+  }, []);
+
   return {
     ...state,
     filters: updatedFilters,
     datasets: updatedDataset,
-    filterToBeMerged: unmerged
+    filterToBeMerged: unmerged,
+    editor: {
+      ...state.editor,
+      features: [
+        ...(state.editor || {}).features,
+        ...features
+      ]
+    }
   };
 }
 
@@ -474,6 +487,10 @@ export function validateLayerWithData(
   return newLayer;
 }
 
+const filterValidators = {
+  [FILTER_TYPES.polygon]: validatePolygonFilter
+};
+
 /**
  * Validate saved filter config with new data,
  * calculate domain and fieldIdx based new fields and data
@@ -481,13 +498,21 @@ export function validateLayerWithData(
  * @param {Array<Object>} dataset.fields
  * @param {Array<Object>} dataset.allData
  * @param {Object} filter - filter to be validate
+ * @param {Array<Object>} layers - existing layers
  * @return {Object | null} - validated filter
  */
-export function validateFilterWithData({fields, allData}, filter) {
+export function validateFilterWithData(dataset, filter, layers) {
+
+  return filterValidators.hasOwnProperty(filter.type) ?
+    filterValidators[filter.type](dataset, filter, layers)
+    : validateFilter(dataset, filter);
+}
+
+function validateFilter({fields, allData}, filter) {
   // match filter.name to field.name
   const fieldIdx = fields.findIndex(({name}) => name === filter.name);
 
-  if (fieldIdx < 0) {
+  if (fieldIdx < 0 && filter.type !== FILTER_TYPES.polygon) {
     // if can't find field with same name, discharge filter
     return null;
   }
@@ -514,10 +539,10 @@ export function validateFilterWithData({fields, allData}, filter) {
 
     matchedFilter = matcheAxis
       ? {
-          ...matchedFilter,
-          yAxis: matcheAxis,
-          ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
-        }
+        ...matchedFilter,
+        yAxis: matcheAxis,
+        ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
+      }
       : matchedFilter;
   }
 
@@ -529,4 +554,23 @@ export function validateFilterWithData({fields, allData}, filter) {
   }
 
   return matchedFilter;
+}
+
+function validatePolygonFilter(dataset, filter, layers) {
+  // validate layerId if matches current layers
+  // validate value is a geojson
+  // validate feature has an ID matching filter.name
+  const {value, layerId, type} = filter;
+
+  if (!(value && value.id && layerId)) {
+    return null;
+  }
+
+  const layer = layers.find(l => l.id === layerId);
+
+  if (!layer) {
+    return null;
+  }
+
+  return isValidFilterValue({type, value}) ? filter : null;
 }

@@ -171,8 +171,7 @@ export const DEFAULT_EXPORT_MAP = {
 };
 
 export const DEFAULT_EDITOR = {
-  mode: EDITOR_MODES.DRAW_POLYGON,
-  selectedFeature: null
+  mode: EDITOR_MODES.DRAW_POLYGON
 };
 
 /**
@@ -609,33 +608,3 @@ export function setFeaturesUpdater(state, {features = []}) {
     };
 }
 
-/**
- * Set the current selected feature
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    selectedFeature: {id: selectedFeatureId}
-  }
-});
-
-/**
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      selectedFeature: null
-    }
-  } : state;
-};
