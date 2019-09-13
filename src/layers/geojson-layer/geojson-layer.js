@@ -72,7 +72,7 @@ export default class GeoJsonLayer extends Layer {
   constructor(props) {
     super(props);
 
-    this.dataToFeature = {};
+    this.dataToFeature = [];
     this.registerVisConfig(geojsonVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
   }
@@ -137,7 +137,7 @@ export default class GeoJsonLayer extends Layer {
     return this.getFeature(this.config.columns);
   }
 
-  static findDefaultLayerProps({label, fields}, foundLayers) {
+  static findDefaultLayerProps({label, fields}) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
     const defaultColumns = {
@@ -146,7 +146,7 @@ export default class GeoJsonLayer extends Layer {
 
     const foundColumns = this.findDefaultColumnField(defaultColumns, fields);
     if (!foundColumns || !foundColumns.length) {
-      return [];
+      return {props: []};
     }
 
     return {
@@ -155,8 +155,7 @@ export default class GeoJsonLayer extends Layer {
           (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
         columns,
         isVisible: true
-      })),
-      foundLayers: foundLayers.filter(l => l.type !== 'trip')
+      }))
     };
   }
 
@@ -328,11 +327,13 @@ export default class GeoJsonLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
+    console.time('updateLayerMeta Geojson')
+
     const getFeature = this.getPositionAccessor();
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
     // calculate layer meta
-    const allFeatures = Object.values(this.dataToFeature);
+    const allFeatures = this.dataToFeature;
 
     // get bounds from features
     const bounds = getGeojsonBounds(allFeatures);
@@ -346,10 +347,12 @@ export default class GeoJsonLayer extends Layer {
     const featureTypes = getGeojsonFeatureTypes(allFeatures);
 
     this.updateMeta({bounds, fixedRadius, featureTypes});
+    console.timeEnd('updateLayerMeta Geojson')
   }
 
   setInitialLayerConfig(allData) {
     this.updateLayerMeta(allData);
+
     const {featureTypes} = this.meta;
     // default settings is stroke: true, filled: false
     if (featureTypes && featureTypes.polygon) {
@@ -376,7 +379,6 @@ export default class GeoJsonLayer extends Layer {
     const layerProps = {
       // multiplier applied just so it being consistent with previously saved maps
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
-      lineWidthMinPixels: 1,
       elevationScale: visConfig.elevationScale,
       pointRadiusScale: radiusScale,
       lineMiterLimit: 4

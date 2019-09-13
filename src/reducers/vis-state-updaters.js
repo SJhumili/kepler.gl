@@ -42,8 +42,7 @@ import {createNewDataEntry} from 'utils/dataset-utils';
 
 import {
   findDefaultLayer,
-  calculateLayerData,
-  getTimeAnimationDomainForTripLayer
+  calculateLayerData
 } from 'utils/layer-utils/layer-utils';
 
 import {
@@ -680,7 +679,7 @@ function updateAnimationDomain(state) {
 }
 
 /**
- * Set animation domain with the min and max of timestamps from geojson
+ * Set animation domain with the miner and max of timestamps from geojson
  * Enable multi-layer domain range
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -693,24 +692,14 @@ function updateAnimationDomain(state) {
 
 export const enableLayerAnimationUpdater = (state, oldLayer) => {
   // calculate domain for 1 layer and update global domain
-  const domain = getTimeAnimationDomainForTripLayer(
-    oldLayer[0],
-    state.datasets
-  );
-
-  const newLayer = oldLayer[0].updateLayerConfig({
-    animation: {
-      ...oldLayer[0].config.animation,
-      domain
-    }
-  });
-
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
-  const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-    sameData: true
-  });
-  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+  let newState = state;
+  if (!oldLayer.config.animation.domain) {
+    oldLayer.getAnimationDomain();
+    newState = {
+      ...state,
+      layers: state.layers.map(l => l.id === oldLayer.id ? oldLayer : l)
+    };
+  }
 
   return updateAnimationDomain(newState);
 };
@@ -1142,8 +1131,6 @@ export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
   console.time('updateVisData')
 
-  console.time('createNewDataEntry')
-
   const {config, options} = action;
 
   const datasets = Array.isArray(action.datasets)
@@ -1160,17 +1147,11 @@ export const updateVisDataUpdater = (state, action) => {
   if (!Object.keys(newDateEntries).length) {
     return state;
   }
-  console.timeEnd('createNewDataEntry')
-
-  console.time('receiveMapConfigUpdater')
 
   // apply config if passed from action
   const previousState = config ? receiveMapConfigUpdater(state, {
     payload: {config, options}
   }) : state;
-  console.timeEnd('receiveMapConfigUpdater')
-
-  console.time('mergeAndCreate')
 
   const stateWithNewData = {
     ...previousState,
@@ -1190,10 +1171,13 @@ export const updateVisDataUpdater = (state, action) => {
 
   // merge state with saved filters
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
+
   // merge state with saved layers
   mergedState = mergeLayers(mergedState, layerToBeMerged);
+
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
+  console.time('addDefaultLayers')
 
   let newLayers = mergedState.layers.filter(
     l => l.config.dataId in newDateEntries
@@ -1201,24 +1185,20 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (!newLayers.length) {
     // no layer merged, find defaults
-    mergedState = addDefaultLayers(mergedState, newDateEntries);
+    const result = addDefaultLayers(mergedState, newDateEntries);
+    mergedState = result.state;
+    newLayers = result.newLayers;
   }
+  console.timeEnd('addDefaultLayers')
 
-  const newLayers = mergedState.layers.filter(
-    l => l.config.dataId in newDateEntries
-  );
-
+  // enable layer animation
   newLayers.forEach(l => {
     if (l.config.animation.enabled) {
-      mergedState = enableLayerAnimationUpdater(mergedState, [l]);
+      mergedState = enableLayerAnimationUpdater(mergedState, l);
     }
   });
 
   if (mergedState.splitMaps.length) {
-    newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
-    );
-
     // if map is split, add new layers to splitMaps
     mergedState = {
       ...mergedState,
@@ -1237,7 +1217,6 @@ export const updateVisDataUpdater = (state, action) => {
       mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
     }
   });
-  console.timeEnd('mergeAndCreate')
 
   console.time('updateAllLayerDomainData')
 
@@ -1359,13 +1338,16 @@ export function addDefaultLayers(state, datasets) {
   );
 
   return {
-    ...state,
-    layers: [...state.layers, ...defaultLayers],
-    layerOrder: [
-      // put new layers on top of old ones
-      ...defaultLayers.map((_, i) => state.layers.length + i),
-      ...state.layerOrder
-    ]
+    state: {
+      ...state,
+      layers: [...state.layers, ...defaultLayers],
+      layerOrder: [
+        // put new layers on top of old ones
+        ...defaultLayers.map((_, i) => state.layers.length + i),
+        ...state.layerOrder
+      ]
+    },
+    newLayers: defaultLayers
   };
 }
 

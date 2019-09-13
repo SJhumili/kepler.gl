@@ -607,7 +607,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               {...visConfiguratorProps}
               label={false}
             />
-            )
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

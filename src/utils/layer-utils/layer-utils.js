@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DEFAULT_LIGHT_SETTINGS} from 'constants/default-settings';
-import {dataToTimeStamp} from 'layers/geojson-layer/geojson-utils';
 /**
  * Find default layers from fields
  *
@@ -32,29 +30,31 @@ export function findDefaultLayer(dataset, layerClasses) {
     return [];
   }
 
-  let layers = [];
-  Object.keys(layerClasses).forEach(lc => {
-    const {props: layerProps, foundLayers} = layerClasses[lc].findDefaultLayerProps(
-      dataset,
-      layers
+  const layerProps = Object.keys(layerClasses).reduce((previous, lc) => {
+    const result =
+      typeof layerClasses[lc].findDefaultLayerProps === 'function'
+        ? layerClasses[lc].findDefaultLayerProps(dataset, previous)
+        : {props: []};
+
+    const props = Array.isArray(result) ? result : result.props || [];
+    const foundLayers = result.foundLayers || previous;
+
+    return foundLayers.concat(
+      props.map(p => ({
+        ...p,
+        type: lc,
+        dataId: dataset.id
+      }))
     );
+  }, []);
 
-    if (layerProps) {
-      const newLayers = (Array.isArray(layerProps) ? layerProps : [layerProps]).map(
-        props => {
-          const layer = new layerClasses[lc]({...props, dataId: dataset.id});
-
-          return typeof layer.setInitialLayerConfig === 'function'
-            ? layer.setInitialLayerConfig(dataset.allData)
-            : layer;
-        }
-      );
-
-      layers = foundLayers.concat(newLayers);
-    }
+  // go through all layerProps to create layer
+  return layerProps.map(props => {
+    const layer = new layerClasses[props.type](props);
+    return typeof layer.setInitialLayerConfig === 'function'
+      ? layer.setInitialLayerConfig(dataset.allData)
+      : layer;
   });
-
-  return layers;
 }
 
 /**
@@ -84,27 +84,4 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
     opt
   );
   return {layerData, layer};
-}
-
-export function getTimeAnimationDomainForTripLayer(layer, datasets) {
-  const {columns, dataId} = layer.config;
-  const dataContent = datasets[dataId].allData;
-  const geojsonFieldIdx = columns.geojson.fieldIdx;
-  const features = dataContent.map(d => d[geojsonFieldIdx]);
-  const unixTimestamps = dataToTimeStamp(features);
-
-  const findMin = timestamps =>
-    timestamps.reduce((accu, ts) => (accu < ts ? accu : ts));
-  const findMax = timestamps =>
-    timestamps.reduce((accu, ts) => (accu > ts ? accu : ts));
-
-  const domain = unixTimestamps.reduce(
-    (accu, ts) => [
-      Math.min(accu[0], findMin(ts)),
-      Math.max(accu[1], findMax(ts))
-    ],
-    [Number(Infinity), -Infinity]
-  );
-
-  return domain;
 }

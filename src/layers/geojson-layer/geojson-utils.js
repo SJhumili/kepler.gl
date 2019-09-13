@@ -18,14 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import geojsonExtent from '@mapbox/geojson-extent';
 import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import {Analyzer} from 'type-analyzer';
-import {getSampleData} from 'utils/data-utils';
-import moment from 'moment';
-import {notNullorUndefined} from 'utils/data-utils';
+import bbox from '@turf/bbox';
 
+import {
+  getSampleData,
+  timeToUnixMilli,
+  notNullorUndefined
+} from 'utils/data-utils';
+
+export function parseGeoJsonRawFeature(rawFeature) {
+  if (typeof rawFeature === 'object') {
+    // Support geojson feature as object
+    // probably need to normalize it as well
+    const normalized = normalize(rawFeature);
+    if (!normalized || !Array.isArray(normalized.features)) {
+      // fail to normalize geojson
+      return null;
+    }
+
+    return normalized.features[0];
+  } else if (typeof rawFeature === 'string') {
+
+    return parseGeometryFromString(rawFeature);
+  } else if (Array.isArray(rawFeature)) {
+    // Support geojson  linestring as an array of points
+    return {
+      type: 'Feature',
+      geometry: {
+        // why do we need to flip it...
+        coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
+        type: 'LineString'
+      }
+    };
+  }
+
+  return null;
+}
 /**
  * Parse raw data to GeoJson feature
  * @param allData
@@ -33,6 +64,7 @@ import {notNullorUndefined} from 'utils/data-utils';
  * @returns {{}}
  */
 export function getGeojsonDataMaps(allData, getFeature) {
+  // console.time('getGeojsonDataMaps')
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -43,38 +75,10 @@ export function getGeojsonDataMaps(allData, getFeature) {
     'GeometryCollection'
   ];
 
-  const dataToFeature = {};
+  const dataToFeature = [];
 
-  allData.forEach((d, index) => {
-    dataToFeature[index] = null;
-    const rawFeature = getFeature(d);
-
-    let feature = null;
-
-    // parse feature from field
-    if (Array.isArray(rawFeature)) {
-      // Support geojson as an array of points
-      feature = {
-        type: 'Feature',
-        geometry: {
-          // why do we need to flip it...
-          coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
-          type: 'LineString'
-        }
-      };
-    } else if (typeof rawFeature === 'string') {
-      feature = parseGeometryFromString(rawFeature);
-    } else if (typeof rawFeature === 'object') {
-      // Support geojson feature as object
-      // probably need to normalize it as well
-      const normalized = normalize(rawFeature);
-      if (!normalized || !Array.isArray(normalized.features)) {
-        // fail to normalize geojson
-        return null;
-      }
-
-      feature = normalized.features[0];
-    }
+  for (let index = 0; index < allData.length; index++) {
+    const feature = parseGeoJsonRawFeature(getFeature(allData[index]));
 
     if (
       feature &&
@@ -89,7 +93,8 @@ export function getGeojsonDataMaps(allData, getFeature) {
 
       dataToFeature[index] = feature;
     }
-  });
+
+  }
 
   return dataToFeature;
 }
@@ -134,10 +139,11 @@ export function parseGeometryFromString(geoString) {
 }
 
 export function getGeojsonBounds(features = []) {
-  // calculate feature bounds is computation heavy
+  // 70 ms for 10,000 polygons
   // here we only pick couple
+  const maxCount = 10000;
   const samples =
-    features.length > 500 ? getSampleData(features, 500) : features;
+    features.length > maxCount ? getSampleData(features, maxCount) : features;
 
   const nonEmpty = samples.filter(
     d =>
@@ -145,7 +151,7 @@ export function getGeojsonBounds(features = []) {
   );
 
   try {
-    return geojsonExtent({
+    return bbox({
       type: 'FeatureCollection',
       features: nonEmpty
     });
@@ -171,7 +177,10 @@ export const featureToDeckGlGeoType = {
 export function getGeojsonFeatureTypes(allFeatures) {
   const featureTypes = {};
   for (let f = 0; f < allFeatures.length; f++) {
-    const geoType = featureToDeckGlGeoType[allFeatures[f].geometry && allFeatures[f].geometry.type];
+    const geoType =
+      featureToDeckGlGeoType[
+        allFeatures[f].geometry && allFeatures[f].geometry.type
+      ];
     if (geoType) {
       featureTypes[geoType] = true;
     }
@@ -204,8 +213,9 @@ export function coordHasLength4(samples) {
 
 export function containValidTime(timestamps) {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));
-  const analyzedType = Analyzer.computeColMeta(formattedTimeStamps);
-  if (analyzedType.find(d => d.category !== 'TIME')) {
+  const analyzedType = Analyzer.computeColMeta(formattedTimeStamps)[0];
+
+  if (!analyzedType || analyzedType.category !== 'TIME') {
     return false;
   }
   return analyzedType;
@@ -216,7 +226,14 @@ export function containValidTime(timestamps) {
  * @param {array} features array of geojson feature objects
  * @returns {boolean} whether it is trip layer animatable
  */
-export function isTripGeoJson(features) {
+export function isTripGeoJsonField(allData, field) {
+  const getValue = d => d[field.tableFieldIndex - 1];
+  const maxCount = 10000;
+  const sampleRawFeatures =
+    allData.length > maxCount ? getSampleData(allData, maxCount, getValue) : allData.map(getValue);
+
+  const features = sampleRawFeatures.map(parseGeoJsonRawFeature);
+
   let isTrip = false;
   const featureTypes = getGeojsonFeatureTypes(features);
   // condition 1: contain line string
@@ -224,45 +241,64 @@ export function isTripGeoJson(features) {
   if (!hasLineString) {
     return isTrip;
   }
+
   // condition 2:sample line strings contain 4 coordinates
-  const sampleFeatures =
-    features.length > 500 ? getSampleData(features, 500) : features;
-  const HasLength4 = coordHasLength4(sampleFeatures);
+  const HasLength4 = coordHasLength4(features);
   if (!HasLength4) {
     return isTrip;
   }
-  // condition 3:the 4 coordinate of the first feature line strings is valid time
-  const tsHolder = sampleFeatures[0].geometry.coordinates.map(
+
+  // condition 3:the 4th coordinate of the first feature line strings is valid time
+  const tsHolder = features[0].geometry.coordinates.map(
     coord => coord[3]
   );
+
   const hasValidTime = containValidTime(tsHolder);
   if (hasValidTime) {
     isTrip = true;
   }
+
   return isTrip;
 }
 
 /**
  * Get unix timestamp from animatable geojson for deck.gl trip layer
- * @param {array} features array of geojson feature objects
- * @returns {} unix timestamp in milliseconds
+ * @param {Array<Object>} features array of geojson feature objects
+ * @returns {Array<Number>} unix timestamp in milliseconds
  */
-export function dataToTimeStamp(features) {
+export function getTripDataToTimeStamp(features) {
   // Analyze type based on coordinates of the 1st lineString
+  // select a sample trip to analyze time format
+
+  console.time('getTripDataToTimeStamp');
+  console.time('analyzedType');
+  const sampleTrip = features.find(
+    f =>
+      f &&
+      f.geometry &&
+      f.geometry.coordinates &&
+      f.geometry.coordinates.length >= 3
+  );
 
   const analyzedType = containValidTime(
-    features[0].geometry.coordinates.map(coord => coord[3])
+    sampleTrip.geometry.coordinates.map(coord => coord[3])
   );
-  const {format} = analyzedType[0];
-  const getTimeValue = coord => {
-    if (coord.length === 4 && notNullorUndefined(coord[3])) {
-      return typeof coord[3] === 'string'
-        ? moment.utc(coord[3], format).valueOf()
-        : format === 'X'
-        ? coord[3]
-        : Math.floor(coord[3] * 1000);
-    }
-  };
+  console.timeEnd('analyzedType');
+  console.time('mapedValue');
 
-  return features.map(f => f.geometry.coordinates.map(getTimeValue));
+  const {format} = analyzedType;
+  const getTimeValue = coord =>
+    coord && notNullorUndefined(coord[3])
+      ? timeToUnixMilli(coord[3], format)
+      : null;
+
+  const mapedValue = features.map(f =>
+    f && f.geometry && Array.isArray(f.geometry.coordinates)
+      ? f.geometry.coordinates.map(getTimeValue)
+      : null
+  );
+  console.timeEnd('mapedValue');
+
+  console.timeEnd('getTripDataToTimeStamp');
+  return mapedValue;
 }

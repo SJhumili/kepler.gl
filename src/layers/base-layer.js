@@ -195,12 +195,12 @@ export default class Layer {
     return null;
   }
   /*
-   * Given a dataset, automatically create layers based on it
-   * and return the props
+   * Given a dataset, automatically find props to create layer based on it
+   * and return the props and previous found layers.
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(dataset, layers) {
-    return {props: null, foundLayers: layers};
+  static findDefaultLayerProps(dataset, foundLayers) {
+    return {props: [], foundLayers};
   }
 
   /**
