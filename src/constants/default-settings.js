@@ -536,15 +536,6 @@ export const DEFAULT_LAYER_COLOR = {
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS = [];
 
-export const DEFAULT_LIGHT_SETTINGS = {
-  lightsPosition: [-122.45, 37.66, 8000, -122.0, 38.0, 8000],
-  ambientRatio: 0.4,
-  diffuseRatio: 0.6,
-  specularRatio: 0.3,
-  lightsStrength: [0.9, 0.0, 0.8, 0.0],
-  numberOfLights: 2
-};
-
 export const NO_VALUE_COLOR = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {

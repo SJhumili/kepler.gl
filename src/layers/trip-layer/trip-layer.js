@@ -32,7 +32,7 @@ import {
   getGeojsonBounds,
   getGeojsonFeatureTypes,
   isTripGeoJsonField,
-  getTripDataToTimeStamp
+  parseTripGeoJsonTimestamp
 } from '../geojson-layer/geojson-utils';
 import {hexToRgb} from 'utils/color-utils';
 import TripInfoModalFactory from './trip-info-modal';
@@ -63,6 +63,7 @@ export default class TripLayer extends Layer {
     super(props);
 
     this.dataToFeature = [];
+    this.dataToTimeStamp = [];
     this.registerVisConfig(tripVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
     this._layerInfoModal = TripInfoModalFactory();
@@ -96,8 +97,8 @@ export default class TripLayer extends Layer {
     };
   }
 
-  getPositionAccessor() {
-    return this.getFeature(this.config.columns);
+  get animationDomain() {
+    return this.config.animation.domain;
   }
 
   get layerInfoModal() {
@@ -110,9 +111,14 @@ export default class TripLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({label, fields, allData, id}, foundLayers) {
+  getPositionAccessor() {
+    return this.getFeature(this.config.columns);
+  }
 
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+  static findDefaultLayerProps({label, fields, allData, id}, foundLayers) {
+    const geojsonColumns = fields
+      .filter(f => f.type === 'geojson')
+      .map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -121,7 +127,8 @@ export default class TripLayer extends Layer {
     const geoJsonColumns = this.findDefaultColumnField(defaultColumns, fields);
 
     const tripColumns = geoJsonColumns.filter(col =>
-      isTripGeoJsonField(allData, fields[col.geojson.fieldIdx]));
+      isTripGeoJsonField(allData, fields[col.geojson.fieldIdx])
+    );
 
     if (!tripColumns.length) {
       return {props: []};
@@ -130,7 +137,8 @@ export default class TripLayer extends Layer {
     return {
       props: tripColumns.map(columns => ({
         label:
-          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
+          this.type,
         columns,
         isVisible: true
       })),
@@ -140,7 +148,8 @@ export default class TripLayer extends Layer {
         prop =>
           prop.type !== 'geojson' ||
           prop.dataId !== id ||
-          !tripColumns.find(c => prop.columns.geojson.name === c.geojson.name))
+          !tripColumns.find(c => prop.columns.geojson.name === c.geojson.name)
+      )
     };
   }
 
@@ -197,7 +206,9 @@ export default class TripLayer extends Layer {
       geojsonData = oldLayerData.data;
     } else {
       // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex.map(i => this.dataToFeature[i]).filter(d => d && d.geometry.type ===  'LineString');
+      geojsonData = filteredIndex
+        .map(i => this.dataToFeature[i])
+        .filter(d => d && d.geometry.type === 'LineString');
     }
 
     // color
@@ -240,32 +251,13 @@ export default class TripLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  /**
-   * Get Domain from array of timestamps
-   * @param {Array<Array>} dataToTimeStamp
-   */
-  getAnimationDomain() {
-    const animationDomain = this.dataToTimeStamp.reduce(
-      (accu, tss) => {
-        const edge = extent(tss);
-        return [
-          Math.min(accu[0], edge[0]),
-          Math.max(accu[1], edge[1])
-        ];
-      },
-      [Number(Infinity), -Infinity]
-    );
-
-    this.updateAnimationDomain(animationDomain);
-  }
-
   updateAnimationDomain(domain) {
     this.updateLayerConfig({
       animation: {
         ...this.config.animation,
         domain
       }
-    })
+    });
   }
 
   updateLayerMeta(allData) {
@@ -274,11 +266,14 @@ export default class TripLayer extends Layer {
       // TODO: revisit this after gpu filtering
       return;
     }
+
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
-    this.dataToTimeStamp = getTripDataToTimeStamp(this.dataToFeature);
+    const {dataToTimeStamp, animationDomain} =
+      parseTripGeoJsonTimestamp(this.dataToFeature);
 
-    this.getAnimationDomain();
+    this.dataToTimeStamp = dataToTimeStamp;
+    this.updateAnimationDomain(animationDomain);
 
     // get bounds from features
     const bounds = getGeojsonBounds(this.dataToFeature);
@@ -326,7 +321,7 @@ export default class TripLayer extends Layer {
           data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
         opacity: this.config.visConfig.opacity,
         widthScale: this.config.visConfig.thickness * zoomFactor * 8,
-        highlightColor:  this.config.highlightColor,
+        highlightColor: this.config.highlightColor,
 
         getWidth: data.getWidth,
         rounded: true,

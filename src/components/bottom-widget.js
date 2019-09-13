@@ -22,7 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
-import AnimationControlFactory from './common/animation-control/animation-slider';
+import AnimationControlFactory from './common/animation-control/animation-control';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
@@ -65,31 +66,33 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
       sidePanelWidth,
       layers
     } = props;
+
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
+    const enlargedFilterIdx = filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange);
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const enlargedFilterWidth = isOpen
       ? containerW - sidePanelWidth
       : containerW;
 
+    // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatedLayer = layers.filter(
       l =>
         l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
 
+    const readToAnimation = Array.isArray(animationConfig.domain) && animationConfig.currentTime;
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatedLayer.length;
-    // show playback control if layers contain trip layer & at least one trip layer is visible
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
         className="bottom-widget--container"
       >
-        {animatedLayer.length ? (
+        {animatedLayer.length && readToAnimation ? (
           <AnimationControl
-            animation={animationConfig}
+            animationConfig={animationConfig}
             updateAnimationTime={visStateActions.updateAnimationTime}
             updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
           />

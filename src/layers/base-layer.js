@@ -25,7 +25,6 @@ import DefaultLayerIcon from './default-layer-icon';
 
 import {
   ALL_FIELD_TYPES,
-  DEFAULT_LIGHT_SETTINGS,
   NO_VALUE_COLOR,
   SCALE_TYPES,
   CHANNEL_SCALES,
@@ -215,7 +214,8 @@ export default class Layer {
     // find all matched fields for each required col
     const requiredColumns = Object.keys(defaultFields).reduce((prev, key) => {
       const requiredFields = allFields.filter(
-        f => f.name === defaultFields[key] || defaultFields[key].includes(f.name)
+        f =>
+          f.name === defaultFields[key] || defaultFields[key].includes(f.name)
       );
 
       prev[key] = requiredFields.length
@@ -415,19 +415,21 @@ export default class Layer {
    */
   assignConfigToLayer(configToCopy, visConfigSettings) {
     // don't deep merge visualChannel field
-    const notToDeepMerge = Object.values(this.visualChannels).map(v => v.field);
-
     // don't deep merge color range, reversed: is not a key by default
-    notToDeepMerge.push('colorRange', 'strokeColorRange');
+    const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
+      Object.values(this.visualChannels).map(v => v.field)
+    );
 
-    // don't copy over domain
-    const notToCopy = Object.values(this.visualChannels).map(v => v.domain);
-
+    // don't copy over domain and animation
+    const notToCopy = ['animation'].concat(
+      Object.values(this.visualChannels).map(v => v.domain)
+    );
     // if range is for the same property group copy it, otherwise, not to copy
     Object.values(this.visualChannels).forEach(v => {
       if (
         configToCopy.visConfig[v.range] &&
-        visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group
+        visConfigSettings[v.range].group !==
+          this.visConfigSettings[v.range].group
       ) {
         notToCopy.push(v.range);
       }
@@ -436,7 +438,7 @@ export default class Layer {
     // don't copy over visualChannel range
     const currentConfig = this.config;
     const copied = this.copyLayerConfig(currentConfig, configToCopy, {
-      notToDeepMerge,
+      shallowCopy,
       notToCopy
     });
 
@@ -471,11 +473,18 @@ export default class Layer {
         !notToCopy.includes(key)
       ) {
         // recursively assign object value
-        copied[key] = this.copyLayerConfig(currentConfig[key], configToCopy[key], {
-          notToDeepMerge,
-          notToCopy
-        });
-      } else if (notNullorUndefined(configToCopy[key]) && !notToCopy.includes(key)) {
+        copied[key] = this.copyLayerConfig(
+          currentConfig[key],
+          configToCopy[key],
+          {
+            notToDeepMerge,
+            notToCopy
+          }
+        );
+      } else if (
+        notNullorUndefined(configToCopy[key]) &&
+        !notToCopy.includes(key)
+      ) {
         // copy
         copied[key] = configToCopy[key];
       } else {
@@ -489,13 +498,18 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
+      if (
+        typeof item === 'string' &&
+        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
+      ) {
         // if assigned one of default LAYER_CONFIGS
         this.config.visConfig[item] =
           LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
       } else if (
-        ['type', 'defaultValue'].every(p => layerVisConfigs[item].hasOwnProperty(p))
+        ['type', 'defaultValue'].every(p =>
+          layerVisConfigs[item].hasOwnProperty(p)
+        )
       ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
@@ -751,7 +765,12 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+    const valueAccessor = maybeToDate.bind(
+      null,
+      isTime,
+      fieldIdx,
+      field.format
+    );
     const indexValueAccessor = i => valueAccessor(allData[i]);
 
     const sortFunction = getSortingFunction(field.type);
@@ -801,7 +820,9 @@ export default class Layer {
 
     const field = radiusChannel.field;
     const fixed =
-      fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
+      fixedRadius === undefined
+        ? this.config.visConfig.fixedRadius
+        : fixedRadius;
     const {radius} = this.config.visConfig;
 
     return fixed

@@ -153,6 +153,7 @@ export default class Slider extends Component {
   render() {
     const {
       classSet,
+      disabled,
       isRanged,
       maxValue,
       minValue,
@@ -170,7 +171,7 @@ export default class Slider extends Component {
 
     return (
       <SliderWrapper
-        className={classnames('kg-slider', {...classSet})}
+        className={classnames('kg-slider', {...classSet, disabled})}
         ref={this.ref}
         isRanged={isRanged}
         vertical={vertical}

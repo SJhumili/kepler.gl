@@ -107,6 +107,12 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
+export const defaultAnimationConfig = {
+  domain: null,
+  currentTime: null,
+  speed: 1
+};
+
 /**
  * Default initial `visState`
  * @memberof visStateUpdaters
@@ -125,9 +131,12 @@ const visStateUpdaters = null;
  * @property {string} layerBlending
  * @property {Object} hoverInfo
  * @property {Object} clicked
+ * @property {Object} mousePos
  * @property {boolean} fileLoading
  * @property {*} fileLoadingErr
  * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
+ * @property {Object} layerClasses
+ * @property {Object} animationConfig
  * @public
  */
 export const INITIAL_VIS_STATE = {
@@ -173,11 +182,7 @@ export const INITIAL_VIS_STATE = {
 
   // default animation
   // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
-  animationConfig: {
-    domain: [null, null],
-    currentTime: 0,
-    speed: 1
-  }
+  animationConfig: defaultAnimationConfig
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -204,12 +209,18 @@ export function layerConfigChangeUpdater(state, action) {
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
   const newLayer = oldLayer.updateLayerConfig(action.newConfig);
+
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
       sameData: true
     });
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+
+    let nextState = state;
+    if (newLayer.config.animation.enabled) {
+      nextState = enableLayerAnimationUpdater(state, {oldLayer: newLayer});
+    }
+    return updateStateWithLayerAndData(nextState, {layerData, layer, idx});
   }
 
   let newState = state;
@@ -329,6 +340,9 @@ export function layerTypeChangeUpdater(state, action) {
   const {layerData, layer} = calculateLayerData(newLayer, state);
 
   let newState = state;
+  if (newLayer.config.animation.enabled) {
+    newState = enableLayerAnimationUpdater(state, {oldLayer: newLayer});
+  }
 
   // update splitMap layer id
   if (state.splitMaps.length) {
@@ -658,12 +672,20 @@ export const updateAnimationTimeUpdater = (state, {value}) => ({
 
 function updateAnimationDomain(state) {
   // merge all animatable layer domain and update global config
-  const animatableLayers = state.layers.filter(l => l.config.animation.enabled);
+  const animatableLayers = state.layers.filter(l =>
+    l.config.animation.enabled && Array.isArray(l.animationDomain));
+
+  if (!animatableLayers.length) {
+    return {
+      ...state,
+      animationConfig: defaultAnimationConfig
+    }
+  }
 
   const mergedDomain = animatableLayers.reduce(
     (accu, layer) => [
-      Math.min(accu[0], layer.config.animation.domain[0]),
-      Math.max(accu[1], layer.config.animation.domain[1])
+      Math.min(accu[0], layer.animationDomain[0]),
+      Math.max(accu[1], layer.animationDomain[1])
     ],
     [+Infinity, -Infinity]
   );
@@ -690,18 +712,13 @@ function updateAnimationDomain(state) {
  *
  */
 
-export const enableLayerAnimationUpdater = (state, oldLayer) => {
+export function enableLayerAnimationUpdater(state, {oldLayer}) {
   // calculate domain for 1 layer and update global domain
-  let newState = state;
-  if (!oldLayer.config.animation.domain) {
-    oldLayer.getAnimationDomain();
-    newState = {
-      ...state,
-      layers: state.layers.map(l => l.id === oldLayer.id ? oldLayer : l)
-    };
+  if (!oldLayer.animationDomain) {
+    return state;
   }
 
-  return updateAnimationDomain(newState);
+  return updateAnimationDomain(state);
 };
 
 /**
@@ -1129,8 +1146,6 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 /* eslint-disable max-statements */
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
-  console.time('updateVisData')
-
   const {config, options} = action;
 
   const datasets = Array.isArray(action.datasets)
@@ -1177,7 +1192,6 @@ export const updateVisDataUpdater = (state, action) => {
 
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
-  console.time('addDefaultLayers')
 
   let newLayers = mergedState.layers.filter(
     l => l.config.dataId in newDateEntries
@@ -1189,12 +1203,11 @@ export const updateVisDataUpdater = (state, action) => {
     mergedState = result.state;
     newLayers = result.newLayers;
   }
-  console.timeEnd('addDefaultLayers')
 
   // enable layer animation
   newLayers.forEach(l => {
     if (l.config.animation.enabled) {
-      mergedState = enableLayerAnimationUpdater(mergedState, l);
+      mergedState = enableLayerAnimationUpdater(mergedState, {oldLayer: l});
     }
   });
 
@@ -1218,13 +1231,8 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  console.time('updateAllLayerDomainData')
-
   const updatedState = updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
 
-  console.timeEnd('updateAllLayerDomainData')
-
-  console.timeEnd('updateVisData')
   return updatedState
 };
 /* eslint-enable max-statements */

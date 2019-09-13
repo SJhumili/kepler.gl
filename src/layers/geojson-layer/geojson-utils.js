@@ -22,6 +22,7 @@ import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import {Analyzer} from 'type-analyzer';
 import bbox from '@turf/bbox';
+import {extent} from 'd3-array';
 
 import {
   getSampleData,
@@ -263,16 +264,14 @@ export function isTripGeoJsonField(allData, field) {
 
 /**
  * Get unix timestamp from animatable geojson for deck.gl trip layer
- * @param {Array<Object>} features array of geojson feature objects
+ * @param {Array<Object>} dataToFeature array of geojson feature objects, can be null
  * @returns {Array<Number>} unix timestamp in milliseconds
  */
-export function getTripDataToTimeStamp(features) {
+export function parseTripGeoJsonTimestamp(dataToFeature) {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
-
-  console.time('getTripDataToTimeStamp');
-  console.time('analyzedType');
-  const sampleTrip = features.find(
+  const empty = {dataToTimeStamp: [], animationDomain: null};
+  const sampleTrip = dataToFeature.find(
     f =>
       f &&
       f.geometry &&
@@ -280,11 +279,18 @@ export function getTripDataToTimeStamp(features) {
       f.geometry.coordinates.length >= 3
   );
 
+  // if no valid geometry
+  if (!sampleTrip) {
+    return empty;
+  }
+
   const analyzedType = containValidTime(
     sampleTrip.geometry.coordinates.map(coord => coord[3])
   );
-  console.timeEnd('analyzedType');
-  console.time('mapedValue');
+
+  if (!analyzedType) {
+    return empty;
+  }
 
   const {format} = analyzedType;
   const getTimeValue = coord =>
@@ -292,13 +298,46 @@ export function getTripDataToTimeStamp(features) {
       ? timeToUnixMilli(coord[3], format)
       : null;
 
-  const mapedValue = features.map(f =>
+  const dataToTimeStamp = dataToFeature.map(f =>
     f && f.geometry && Array.isArray(f.geometry.coordinates)
       ? f.geometry.coordinates.map(getTimeValue)
       : null
   );
-  console.timeEnd('mapedValue');
 
-  console.timeEnd('getTripDataToTimeStamp');
-  return mapedValue;
+  const animationDomain = getAnimationDomainFromTimestamps(dataToTimeStamp);
+
+  return {dataToTimeStamp, animationDomain};
+}
+
+function findMinFromSorted(list = []) {
+  let i = 0;
+  while (i < list.length) {
+    if (notNullorUndefined(list[i])) {
+      return list[i]
+    }
+    i++;
+  }
+  return null;
+}
+
+function findMaxFromSorted(list = []) {
+  let i = list.length - 1;
+  while (i > 0) {
+    if (notNullorUndefined(list[i])) {
+      return list[i]
+    }
+    i--;
+  }
+  return null;
+}
+
+export function getAnimationDomainFromTimestamps(dataToTimeStamp = []) {
+  return dataToTimeStamp.reduce(
+    (accu, tss) => {
+      accu[0] = Math.min(accu[0], findMinFromSorted(tss));
+      accu[1] = Math.max(accu[1], findMaxFromSorted(tss));
+      return accu;
+    },
+    [Number(Infinity), -Infinity]
+  );
 }

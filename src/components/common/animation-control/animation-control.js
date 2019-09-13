@@ -91,14 +91,14 @@ function AnimationControlFactory(
     }
 
     onSlider1Change = val => {
-      const {domain} = this.props.animation;
+      const {domain} = this.props.animationConfig;
       if (val >= domain[0] && val <= domain[1]) {
         this.props.updateAnimationTime(val);
       }
     };
 
     _updateAnimationTime = () => {
-      const {domain} = this.props.animation;
+      const {domain} = this.props.animationConfig;
       this.props.updateAnimationTime(domain[0]);
       this._startAnimation();
     };
@@ -110,7 +110,7 @@ function AnimationControlFactory(
 
     _nextFrame = () => {
       this._animation = null;
-      const {currentTime, domain, speed} = this.props.animation;
+      const {currentTime, domain, speed} = this.props.animationConfig;
       const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
       const nextTime =
         currentTime + speed > domain[1]
@@ -136,8 +136,7 @@ function AnimationControlFactory(
     };
 
     render() {
-      const {animation} = this.props;
-      const {currentTime, domain, speed} = animation;
+      const {currentTime, domain, speed} = this.props.animationConfig;
       const {showSpeedControl} = this.state;
 
       return (
@@ -161,8 +160,8 @@ function AnimationControlFactory(
               <Slider
                 showValues={false}
                 isRanged={false}
-                minValue={domain[0]}
-                maxValue={domain[1]}
+                minValue={domain ? domain[0] : 0}
+                maxValue={domain ? domain[1] : 1}
                 value1={currentTime}
                 onSlider1Change={this.onSlider1Change}
                 enableBarDrag={true}
@@ -181,7 +180,6 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
-
           <FloatingTimeDisplay currentTime={currentTime} />
         </BottomWidgetInner>
       );

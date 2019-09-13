@@ -79,7 +79,7 @@ export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
 // // common factory
-export {default as AnimationControlFactory} from './common/animation-control/animation-slider';
+export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
